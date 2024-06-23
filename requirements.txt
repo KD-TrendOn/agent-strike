@@ -6,6 +6,7 @@ async-timeout==4.0.3
 attrs==23.2.0
 certifi==2024.6.2
 charset-normalizer==3.3.2
+dataclasses-json==0.6.7
 distro==1.9.0
 exceptiongroup==1.2.1
 frozenlist==1.4.1
@@ -17,12 +18,15 @@ idna==3.7
 jsonpatch==1.33
 jsonpointer==3.0.0
 langchain==0.2.5
+langchain-community==0.2.5
 langchain-core==0.2.9
 langchain-openai==0.1.9
 langchain-text-splitters==0.2.1
 langgraph==0.1.1
 langsmith==0.1.81
+marshmallow==3.21.3
 multidict==6.0.5
+mypy-extensions==1.0.0
 numpy==1.26.4
 openai==1.35.3
 orjson==3.10.5
@@ -38,6 +42,7 @@ SQLAlchemy==2.0.31
 tenacity==8.4.1
 tiktoken==0.7.0
 tqdm==4.66.4
+typing-inspect==0.9.0
 typing_extensions==4.12.2
 urllib3==2.2.2
 yarl==1.9.4
