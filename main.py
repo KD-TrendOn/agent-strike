@@ -10,6 +10,7 @@ from langchain.pydantic_v1 import BaseModel, Field
 from langgraph.graph import StateGraph, END
 from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
 from typing import Literal
+import json
 
 load_dotenv()
 
@@ -36,6 +37,8 @@ class LanguageSchema(BaseModel):
 
 
 def get_language(programming_language:str) -> str:
+    if programming_language == 'python':
+        return 'python'
     output_parser = PydanticOutputParser(pydantic_object=LanguageSchema)
     format_instructions = output_parser.get_format_instructions()
     prompt_template = """Ты эксперт которому нужно извлечь информацию из текста.
@@ -202,21 +205,84 @@ prompt = ChatPromptTemplate.from_messages(
 )
 
 from langchain_core.messages import AIMessage, HumanMessage
-chat_history = []
+
 agent = create_tool_calling_agent(llm, tools, prompt)
 
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
+def msg_from_list(chat_history:list, file_path):
+    result = []
+    for i in chat_history:
+        result.append(str(i.content))
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(result, f)
 
-input_message = input('Введите ваше сообщение:\n')
-while input_message != '':
-    result = agent_executor.invoke({'input':input_message, 'chat_history':chat_history})['output']
-    chat_history.extend(
-        [
-            HumanMessage(content=input_message),
-            AIMessage(content=result)
-        ]
-    )
-    if len(chat_history) > 10:
-        chat_history = chat_history[3:]
+
+def list_from_msg(file_path):
+    result = []
+    with open(file_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    for i, datum in enumerate(data):
+        if i%2 == 0:
+            result.append(HumanMessage(content=datum))
+        else:
+            result.append(AIMessage(content=datum))
+    return result
+
+
+def run_context():
+    instructions = ""
+    requirements = ""
+    chat_history_boot = []
+    if not os.path.exists(os.path.join(ROOT_FOLDER, 'agent')):
+        os.mkdir(os.path.join(ROOT_FOLDER, 'agent'))
+        with open(os.path.join(ROOT_FOLDER, 'agent', 'instructions.txt'), 'w', encoding='utf-8') as f:
+            f.write("Напишите здесь описание проекта, и какую то дополнительную информацию")
+        with open(os.path.join(ROOT_FOLDER, 'agent', 'requirements.txt'), 'w', encoding='utf-8') as f:
+            f.write("Напишите здесь требования к коду, оформлению и другое.")
+        with open(os.path.join(ROOT_FOLDER, 'agent', 'msg.json'), 'w', encoding='utf-8') as f:
+            json.dump([], f)
+    else:
+        if os.path.exists(os.path.join(ROOT_FOLDER, 'agent', 'instructions.txt')):
+            with open(os.path.join(ROOT_FOLDER, 'agent', 'instructions.txt'), 'r', encoding='utf-8') as f:
+                instructions = f.read()
+        else:
+            with open(os.path.join(ROOT_FOLDER, 'agent', 'instructions.txt'), 'w', encoding='utf-8') as f:
+                f.write("Напишите здесь описание проекта, и какую то дополнительную информацию")
+        if os.path.exists(os.path.join(ROOT_FOLDER, 'agent', 'requirements.txt')):
+            with open(os.path.join(ROOT_FOLDER, 'agent', 'requirements.txt'), 'r', encoding='utf-8') as f:
+                requirements = f.read()
+        else:
+            with open(os.path.join(ROOT_FOLDER, 'agent', 'requirements.txt'), 'w', encoding='utf-8') as f:
+                f.write("Напишите здесь требования к коду, оформлению и другое.")
+        if os.path.exists(os.path.join(ROOT_FOLDER, 'agent', 'msg.json')):
+            chat_history_boot = list_from_msg(os.path.join(ROOT_FOLDER, 'agent', 'msg.json'))
+        else:
+            with open(os.path.join(ROOT_FOLDER, 'agent', 'msg.json'), 'w', encoding='utf-8') as f:
+                json.dump([], f)
+    return {'instructions':instructions, 'requirements':requirements, 'chat_history':chat_history_boot}
+
+
+if __name__ == "__main__":
     input_message = input('Введите ваше сообщение:\n')
+    while input_message != '':
+        data = run_context()
+        chat_history = data['chat_history']
+        instructions = data['instructions']
+        requirements = data['requirements']
+        input_string = f"""Запрос пользователя:{input_message}
+        Специальные требования к коду: {requirements}
+        Дополнительные инструкции: {instructions}
+        """
+        
+        result = agent_executor.invoke({'input':input_message, 'chat_history':chat_history})['output']
+        chat_history.extend(
+            [
+                HumanMessage(content=input_message),
+                AIMessage(content=result)
+            ]
+        )
+        if len(chat_history) > 10:
+            chat_history = chat_history[3:]
+        msg_from_list(chat_history=chat_history, file_path=os.path.join(ROOT_FOLDER, 'agent', 'msg.json'))
+        input_message = input('Введите ваше сообщение:\n')
