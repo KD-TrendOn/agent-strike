@@ -283,6 +283,6 @@ if __name__ == "__main__":
             ]
         )
         if len(chat_history) > 10:
-            chat_history = chat_history[3:]
+            chat_history = chat_history[2:]
         msg_from_list(chat_history=chat_history, file_path=os.path.join(ROOT_FOLDER, 'agent', 'msg.json'))
         input_message = input('Введите ваше сообщение:\n')
