@@ -275,7 +275,7 @@ if __name__ == "__main__":
         Дополнительные инструкции: {instructions}
         """
         
-        result = agent_executor.invoke({'input':input_message, 'chat_history':chat_history})['output']
+        result = agent_executor.invoke({'input':input_string, 'chat_history':chat_history})['output']
         chat_history.extend(
             [
                 HumanMessage(content=input_message),
