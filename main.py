@@ -261,6 +261,7 @@ def run_context():
             with open(os.path.join(ROOT_FOLDER, 'agent', 'msg.json'), 'w', encoding='utf-8') as f:
                 json.dump([], f)
     return {'instructions':instructions, 'requirements':requirements, 'chat_history':chat_history_boot}
+#будет тулза с доксом
 
 
 if __name__ == "__main__":
